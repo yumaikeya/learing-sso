@@ -1,0 +1,22 @@
+version: '3.9'
+services:
+  app1:
+    build:
+      context: .
+      dockerfile: app1/Dockerfile
+    volumes:
+      - ./app1:/usr/src/app
+    # command: sh -c "cd main-app && yarn start"
+    ports:
+      - "3000:3000"
+    stdin_open: true 
+  app2:
+    build:
+      context: .
+      dockerfile: app2/Dockerfile
+    volumes:
+      - ./app2:/usr/src/app
+    # command: sh -c "cd sub-app && yarn start"
+    ports:
+      - "3001:3000"
+    stdin_open: true 
