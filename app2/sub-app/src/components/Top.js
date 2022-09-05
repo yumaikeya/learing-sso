@@ -30,7 +30,7 @@ const Top = memo(() => {
 
   return (
     <>
-      <h2>Hello {user.username}</h2>
+      <h2 style={{marginTop: 0}}>Hello {user.username}</h2>
       <button onClick={handleClick}>SignOut</button>
     </>
   )
