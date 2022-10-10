@@ -9,10 +9,13 @@ const Singin = memo(() => {
   const handleClick = () => {
     (async () => {
       try {
-        await Auth.signIn(
-          process.env.REACT_APP_USER_NAME,
-          process.env.REACT_APP_USER_PASSWORD
-        )
+        await Auth.signIn({
+          "username": process.env.REACT_APP_USER_NAME,
+          "password": process.env.REACT_APP_USER_PASSWORD,
+          "validationData": {
+            "tenant": "INSPECTION"
+          }
+        })
 
         await Auth.currentSession()
         console.log("SignIn done!")
