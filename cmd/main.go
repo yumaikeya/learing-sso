@@ -15,14 +15,17 @@ type PhotoHandler struct{}
 
 func (h *SpotHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	utils.EnhanceResponseWriter(&w)
+	defer r.Body.Close()
+	b, err := io.ReadAll(r.Body) //ReadAllでResponse Bodyを読み切る
+	if err != nil {
+		fmt.Fprint(w, err.Error())
+		return
+	}
 	spotUsecase := spotApplication.NewUsecase()
 
 	switch r.Method {
 	case "POST":
-		body := make([]byte, r.ContentLength)
-		r.Body.Read(body) // byte 配列にリクエストボディを読み込む
-
-		spot, err := spotUsecase.Register(r.Context(), body)
+		spot, err := spotUsecase.Register(r.Context(), b)
 		if err != nil {
 			fmt.Fprint(w, err.Error())
 			return
@@ -40,13 +43,17 @@ func (h *SpotHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *PhotoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	utils.EnhanceResponseWriter(&w)
+	defer r.Body.Close()
+	b, err := io.ReadAll(r.Body) //ReadAllでResponse Bodyを読み切る
+	if err != nil {
+		fmt.Fprint(w, err.Error())
+		return
+	}
+
 	photoUsecase := photoApplication.NewUsecase()
 
 	switch r.Method {
 	case "POST":
-		defer r.Body.Close()
-		b, err := io.ReadAll(r.Body) //ReadAllでResponse Bodyを読み切る
-
 		photo, err := photoUsecase.Register(r.Context(), b)
 		if err != nil {
 			fmt.Fprint(w, err.Error())
@@ -54,11 +61,11 @@ func (h *PhotoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprint(w, string(func() (b []byte) { j, _ := json.Marshal(photo); return j }()))
 	case "GET":
-		// photo, err := photoUsecase.List(r.Context())
-		// if err != nil {
-		// 	fmt.Fprint(w, err.Error())
-		// }
-		// fmt.Fprint(w, string(func() (b []byte) { j, _ := json.Marshal(photo); return j }()))
+		photo, err := photoUsecase.List(r.Context())
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+		}
+		fmt.Fprint(w, string(func() (b []byte) { j, _ := json.Marshal(photo); return j }()))
 	}
 }
 

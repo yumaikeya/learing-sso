@@ -59,7 +59,20 @@ func (usecase *Usecase) Register(ctx context.Context, b []byte) (dto DTO, err er
 	return
 }
 
-func (usecase *Usecase) List(ctx context.Context) (dtos []DTO) {
+func (usecase *Usecase) List(ctx context.Context) (dtos []DTO, err error) {
+	dbPhotos := []dbModel{}
 
+	db := databases.NewLocalPostgres()
+	if res := db.Debug().Table("photos").Find(&dbPhotos); res.Error != nil {
+		return dtos, res.Error
+	}
+	spots := func() (s []model.Photo) {
+		for i := range dbPhotos {
+			s = append(s, model.Photo{Id: dbPhotos[i].Id, Src: dbPhotos[i].Src, Spot: dbPhotos[i].Spot, CreatedAt: time.Unix(dbPhotos[i].CreatedAt, 0)})
+		}
+		return
+	}()
+
+	utils.MarshalAndInsert(spots, &dtos)
 	return
 }
