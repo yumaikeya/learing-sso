@@ -1,0 +1,26 @@
+services:
+  api:
+    working_dir: /workspace/go
+    build:
+      context: .
+      target: local
+      dockerfile: Dockerfile.api
+    volumes:
+      - ./:/workspace/go
+    tty: true
+    ports:
+      - 8088:8088
+    command: sh -c "go mod tidy && air -c .air.toml"
+
+  db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: angya
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/pgdata:/var/lib/postgresql/data/pgdata
+    tty: true
