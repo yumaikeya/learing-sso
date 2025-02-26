@@ -12,6 +12,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -91,4 +93,10 @@ func EnhanceResponseWriter(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	(*w).Header().Set("Access-Control-Allow-Headers", "*")
+}
+
+func GetIdFromPath(p string) (id string) {
+	p = path.Clean("/" + p)
+	slc := strings.Split(p, "/")
+	return slc[len(slc)-1]
 }

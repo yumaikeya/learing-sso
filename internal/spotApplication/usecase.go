@@ -13,7 +13,7 @@ type (
 	Usecase struct{}
 
 	command struct {
-		Name string
+		Name *string
 	}
 
 	DTO struct {
@@ -37,7 +37,7 @@ func (usecase *Usecase) Register(ctx context.Context, b []byte) (dto DTO, err er
 		return
 	}
 
-	spot, err := model.NewSpot(&cmd.Name)
+	spot, err := model.NewSpot(cmd.Name)
 	if err != nil {
 		return
 	}
@@ -45,6 +45,9 @@ func (usecase *Usecase) Register(ctx context.Context, b []byte) (dto DTO, err er
 	db := databases.NewLocalPostgres()
 	if res := db.Table("spots").Save(&dbModel{Name: spot.Name, CreatedAt: spot.CreatedAt.Unix()}); res.Error != nil {
 		return dto, res.Error
+	}
+	if d, _ := db.DB(); d != nil {
+		defer d.Close()
 	}
 
 	utils.MarshalAndInsert(spot, &dto)
@@ -65,6 +68,9 @@ func (usecase *Usecase) List(ctx context.Context) (dtos []DTO, err error) {
 		}
 		return
 	}()
+	if d, _ := db.DB(); d != nil {
+		defer d.Close()
+	}
 
 	utils.MarshalAndInsert(spots, &dtos)
 

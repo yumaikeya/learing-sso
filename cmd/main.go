@@ -2,16 +2,23 @@ package main
 
 import (
 	"angya-backend/internal/photoApplication"
+	"angya-backend/internal/poiApplication"
 	"angya-backend/internal/spotApplication"
 	"angya-backend/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	_ "net/http/pprof"
 )
 
-type SpotHandler struct{}
-type PhotoHandler struct{}
+type (
+	SpotHandler        struct{}
+	PhotoHandler       struct{}
+	PhotoDetailHandler struct{}
+	PoiHandler         struct{}
+)
 
 func (h *SpotHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	utils.EnhanceResponseWriter(&w)
@@ -69,8 +76,59 @@ func (h *PhotoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *PhotoDetailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	utils.EnhanceResponseWriter(&w)
+	defer r.Body.Close()
+	b, err := io.ReadAll(r.Body) //ReadAllでResponse Bodyを読み切る
+	if err != nil {
+		fmt.Fprint(w, err.Error())
+		return
+	}
+	id := utils.GetIdFromPath(r.URL.Path)
+
+	photoUsecase := photoApplication.NewUsecase()
+
+	switch r.Method {
+	case "PATCH":
+		photo, err := photoUsecase.Update(r.Context(), id, b)
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+			return
+		}
+		fmt.Fprint(w, string(func() (b []byte) { j, _ := json.Marshal(photo); return j }()))
+	}
+}
+
+func (h *PoiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	utils.EnhanceResponseWriter(&w)
+	defer r.Body.Close()
+	b, err := io.ReadAll(r.Body) //ReadAllでResponse Bodyを読み切る
+	if err != nil {
+		fmt.Fprint(w, err.Error())
+		return
+	}
+	poiUsecase := poiApplication.NewUsecase()
+
+	switch r.Method {
+	case "POST":
+		poi, err := poiUsecase.Migrate(r.Context(), b)
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+			return
+		}
+		fmt.Fprint(w, string(func() (b []byte) { j, _ := json.Marshal(poi); return j }()))
+	case "GET":
+		pois, err := poiUsecase.List(r.Context())
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+			return
+		}
+		fmt.Fprint(w, string(func() (b []byte) { j, _ := json.Marshal(pois); return j }()))
+	}
+}
+
 func main() {
-	s, p := SpotHandler{}, PhotoHandler{}
+	s, p, p2, o := SpotHandler{}, PhotoHandler{}, PhotoDetailHandler{}, PoiHandler{}
 
 	server := http.Server{
 		Addr:    ":8088",
@@ -79,6 +137,8 @@ func main() {
 
 	http.Handle("/api/spots", &s)
 	http.Handle("/api/photos", &p)
+	http.Handle("/api/photos/", &p2)
+	http.Handle("/api/pois", &o)
 
 	server.ListenAndServe()
 }
